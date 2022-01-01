@@ -15,16 +15,17 @@ import time
 # This package contains a subdirectory called `test_module`.
 # Calling `test_module.one()` should return `2`.
 # If you find that confusing, take it up with @jiaodong...
-HTTPS_PACKAGE_URI = ("https://github.com/shrekris-anyscale/"
-                     "test_module/archive/HEAD.zip")
+HTTPS_PACKAGE_URI = (
+    "https://github.com/shrekris-anyscale/" "test_module/archive/HEAD.zip"
+)
 S3_PACKAGE_URI = "s3://runtime-env-test/test_runtime_env.zip"
 GS_PACKAGE_URI = "gs://public-runtime-env-test/test_module.zip"
 
 
-@pytest.mark.parametrize("option", [
-    "failure", "working_dir", "py_modules", "py_modules_path",
-    "working_dir_path"
-])
+@pytest.mark.parametrize(
+    "option",
+    ["failure", "working_dir", "py_modules", "py_modules_path", "working_dir_path"],
+)
 @pytest.mark.skipif(sys.platform == "win32", reason="Fail to create temp dir.")
 def test_lazy_reads(start_cluster, tmp_working_dir, option: str):
     """Tests the case where we lazily read files or import inside a task/actor.
@@ -41,20 +42,19 @@ def test_lazy_reads(start_cluster, tmp_working_dir, option: str):
         elif option == "working_dir":
             ray.init(address, runtime_env={"working_dir": tmp_working_dir})
         elif option == "working_dir_path":
-            ray.init(
-                address, runtime_env={"working_dir": Path(tmp_working_dir)})
+            ray.init(address, runtime_env={"working_dir": Path(tmp_working_dir)})
         elif option == "py_modules":
             ray.init(
                 address,
                 runtime_env={
                     "py_modules": [str(Path(tmp_working_dir) / "test_module")]
-                })
+                },
+            )
         elif option == "py_modules_path":
             ray.init(
                 address,
-                runtime_env={
-                    "py_modules": [Path(tmp_working_dir) / "test_module"]
-                })
+                runtime_env={"py_modules": [Path(tmp_working_dir) / "test_module"]},
+            )
 
     call_ray_init()
 
@@ -71,6 +71,7 @@ def test_lazy_reads(start_cluster, tmp_working_dir, option: str):
     @ray.remote
     def test_import():
         import test_module
+
         return test_module.one()
 
     if option == "failure":
@@ -97,6 +98,7 @@ def test_lazy_reads(start_cluster, tmp_working_dir, option: str):
     class Actor:
         def test_import(self):
             import test_module
+
             return test_module.one()
 
         def test_read(self):
@@ -133,10 +135,9 @@ def test_captured_import(start_cluster, tmp_working_dir, option: str):
             ray.init(
                 address,
                 runtime_env={
-                    "py_modules": [
-                        os.path.join(tmp_working_dir, "test_module")
-                    ]
-                })
+                    "py_modules": [os.path.join(tmp_working_dir, "test_module")]
+                },
+            )
 
     call_ray_init()
 
@@ -302,23 +303,34 @@ def test_exclusion(start_cluster, tmp_working_dir, option):
             return "FAILED"
 
     def get_all():
-        return ray.get([
-            check_file.remote("test1"),
-            check_file.remote("test2"),
-            check_file.remote("test3"),
-            check_file.remote(os.path.join("tmp_dir", "test_1")),
-            check_file.remote(os.path.join("tmp_dir", "test_2")),
-            check_file.remote(os.path.join("tmp_dir", "test_3")),
-            check_file.remote(os.path.join("tmp_dir", "sub_dir", "test_1")),
-            check_file.remote(os.path.join("tmp_dir", "sub_dir", "test_2")),
-            check_file.remote(os.path.join("cache", "test_1")),
-            check_file.remote(os.path.join("tmp_dir", "cache", "test_1")),
-            check_file.remote(os.path.join("another_dir", "cache", "test_1")),
-        ])
+        return ray.get(
+            [
+                check_file.remote("test1"),
+                check_file.remote("test2"),
+                check_file.remote("test3"),
+                check_file.remote(os.path.join("tmp_dir", "test_1")),
+                check_file.remote(os.path.join("tmp_dir", "test_2")),
+                check_file.remote(os.path.join("tmp_dir", "test_3")),
+                check_file.remote(os.path.join("tmp_dir", "sub_dir", "test_1")),
+                check_file.remote(os.path.join("tmp_dir", "sub_dir", "test_2")),
+                check_file.remote(os.path.join("cache", "test_1")),
+                check_file.remote(os.path.join("tmp_dir", "cache", "test_1")),
+                check_file.remote(os.path.join("another_dir", "cache", "test_1")),
+            ]
+        )
 
     assert get_all() == [
-        "Test", "Test", "Test", "Test", "Test", "Test", "Test", "Test", "Test",
-        "Test", "Test"
+        "Test",
+        "Test",
+        "Test",
+        "Test",
+        "Test",
+        "Test",
+        "Test",
+        "Test",
+        "Test",
+        "Test",
+        "Test",
     ]
 
     ray.shutdown()
@@ -337,22 +349,25 @@ def test_exclusion(start_cluster, tmp_working_dir, option):
 
     if option == "working_dir":
         ray.init(
-            address,
-            runtime_env={
-                "working_dir": tmp_working_dir,
-                "excludes": excludes
-            })
+            address, runtime_env={"working_dir": tmp_working_dir, "excludes": excludes}
+        )
     else:
         ray.init(
-            address,
-            runtime_env={
-                "py_modules": [tmp_working_dir],
-                "excludes": excludes
-            })
+            address, runtime_env={"py_modules": [tmp_working_dir], "excludes": excludes}
+        )
 
     assert get_all() == [
-        "Test", "FAILED", "Test", "FAILED", "FAILED", "Test", "FAILED",
-        "FAILED", "Test", "Test", "Test"
+        "Test",
+        "FAILED",
+        "Test",
+        "FAILED",
+        "FAILED",
+        "Test",
+        "FAILED",
+        "FAILED",
+        "Test",
+        "Test",
+        "Test",
     ]
 
     ray.shutdown()
@@ -361,36 +376,41 @@ def test_exclusion(start_cluster, tmp_working_dir, option):
     excludes = ["*"]
     if option == "working_dir":
         ray.init(
-            address,
-            runtime_env={
-                "working_dir": tmp_working_dir,
-                "excludes": excludes
-            })
+            address, runtime_env={"working_dir": tmp_working_dir, "excludes": excludes}
+        )
     else:
         module_name = Path(tmp_working_dir).name
         ray.init(
-            address,
-            runtime_env={
-                "py_modules": [tmp_working_dir],
-                "excludes": excludes
-            })
+            address, runtime_env={"py_modules": [tmp_working_dir], "excludes": excludes}
+        )
 
     assert get_all() == [
-        "FAILED", "FAILED", "FAILED", "FAILED", "FAILED", "FAILED", "FAILED",
-        "FAILED", "FAILED", "FAILED", "FAILED"
+        "FAILED",
+        "FAILED",
+        "FAILED",
+        "FAILED",
+        "FAILED",
+        "FAILED",
+        "FAILED",
+        "FAILED",
+        "FAILED",
+        "FAILED",
+        "FAILED",
     ]
 
     ray.shutdown()
 
     # Test excluding with a .gitignore file.
     with open(f"{tmp_working_dir}/.gitignore", "w") as f:
-        f.write("""
+        f.write(
+            """
 # Comment
 test_[12]
 /test1
 !/tmp_dir/sub_dir/test_1
 cache/
-""")
+"""
+        )
 
     if option == "working_dir":
         ray.init(address, runtime_env={"working_dir": tmp_working_dir})
@@ -399,8 +419,17 @@ cache/
         ray.init(address, runtime_env={"py_modules": [tmp_working_dir]})
 
     assert get_all() == [
-        "FAILED", "Test", "Test", "FAILED", "FAILED", "Test", "Test", "FAILED",
-        "FAILED", "FAILED", "FAILED"
+        "FAILED",
+        "Test",
+        "Test",
+        "FAILED",
+        "FAILED",
+        "Test",
+        "Test",
+        "FAILED",
+        "FAILED",
+        "FAILED",
+        "FAILED",
     ]
 
 
