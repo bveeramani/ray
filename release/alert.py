@@ -156,7 +156,17 @@ def fetch_latest_results(
         results = json.loads(results)
         artifacts = json.loads(artifacts)
 
-        yield result_hash, created_on, category, test_suite, test_name, status, results, artifacts, last_logs
+        yield (
+            result_hash,
+            created_on,
+            category,
+            test_suite,
+            test_name,
+            status,
+            results,
+            artifacts,
+            last_logs,
+        )
 
 
 def mark_as_handled(
