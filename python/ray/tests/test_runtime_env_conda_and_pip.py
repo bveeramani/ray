@@ -1,9 +1,12 @@
 import os
 import pytest
 import sys
-from ray._private.test_utils import (wait_for_condition, chdir,
-                                     check_local_files_gced,
-                                     generate_runtime_env_dict)
+from ray._private.test_utils import (
+    wait_for_condition,
+    chdir,
+    check_local_files_gced,
+    generate_runtime_env_dict,
+)
 
 import yaml
 import tempfile
@@ -19,7 +22,8 @@ if not os.environ.get("CI"):
 
 @pytest.mark.skipif(
     os.environ.get("CI") and sys.platform != "linux",
-    reason="Requires PR wheels built in CI, so only run on linux CI machines.")
+    reason="Requires PR wheels built in CI, so only run on linux CI machines.",
+)
 @pytest.mark.parametrize("field", ["conda", "pip"])
 def test_files_remote_cluster(start_cluster, field):
     """Test that requirements files are parsed on the driver, not the cluster.
@@ -36,11 +40,7 @@ def test_files_remote_cluster(start_cluster, field):
     # this test should fail because the relative path won't make sense.
     with tempfile.TemporaryDirectory() as tmpdir, chdir(tmpdir):
         if field == "conda":
-            conda_dict = {
-                "dependencies": ["pip", {
-                    "pip": ["pip-install-test==0.5"]
-                }]
-            }
+            conda_dict = {"dependencies": ["pip", {"pip": ["pip-install-test==0.5"]}]}
             relative_filepath = "environment.yml"
             conda_file = Path(relative_filepath)
             conda_file.write_text(yaml.dump(conda_dict))
@@ -57,6 +57,7 @@ def test_files_remote_cluster(start_cluster, field):
         @ray.remote
         def f():
             import pip_install_test  # noqa: F401
+
             return True
 
         # Ensure that the runtime env has been installed.
@@ -65,7 +66,8 @@ def test_files_remote_cluster(start_cluster, field):
 
 @pytest.mark.skipif(
     os.environ.get("CI") and sys.platform != "linux",
-    reason="Requires PR wheels built in CI, so only run on linux CI machines.")
+    reason="Requires PR wheels built in CI, so only run on linux CI machines.",
+)
 @pytest.mark.parametrize("field", ["conda", "pip"])
 @pytest.mark.parametrize("spec_format", ["file", "python_object"])
 def test_job_level_gc(start_cluster, field, spec_format, tmp_path):
@@ -76,12 +78,13 @@ def test_job_level_gc(start_cluster, field, spec_format, tmp_path):
     cluster, address = start_cluster
 
     ray.init(
-        address,
-        runtime_env=generate_runtime_env_dict(field, spec_format, tmp_path))
+        address, runtime_env=generate_runtime_env_dict(field, spec_format, tmp_path)
+    )
 
     @ray.remote
     def f():
         import pip_install_test  # noqa: F401
+
         return True
 
     # Ensure that the runtime env has been installed.
@@ -98,15 +101,16 @@ def test_job_level_gc(start_cluster, field, spec_format, tmp_path):
     # state that prevents reinstalling the same conda env.)
 
     ray.init(
-        address,
-        runtime_env=generate_runtime_env_dict(field, spec_format, tmp_path))
+        address, runtime_env=generate_runtime_env_dict(field, spec_format, tmp_path)
+    )
 
     assert ray.get(f.remote())
 
 
 @pytest.mark.skipif(
     os.environ.get("CI") and sys.platform != "linux",
-    reason="Requires PR wheels built in CI, so only run on linux CI machines.")
+    reason="Requires PR wheels built in CI, so only run on linux CI machines.",
+)
 @pytest.mark.parametrize("field", ["conda", "pip"])
 @pytest.mark.parametrize("spec_format", ["file", "python_object"])
 def test_detached_actor_gc(start_cluster, field, spec_format, tmp_path):
@@ -116,12 +120,14 @@ def test_detached_actor_gc(start_cluster, field, spec_format, tmp_path):
     ray.init(
         address,
         namespace="test",
-        runtime_env=generate_runtime_env_dict(field, spec_format, tmp_path))
+        runtime_env=generate_runtime_env_dict(field, spec_format, tmp_path),
+    )
 
     @ray.remote
     class A:
         def test_import(self):
             import pip_install_test  # noqa: F401
+
             return True
 
     a = A.options(name="test", lifetime="detached").remote()
