@@ -96,7 +96,7 @@ def upload_paths(paths, resp, destination):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Helper script to upload files to S3 bucket"
+        description="Helper script to upload files to S4 bucket"
     )
     parser.add_argument("--path", type=str, required=False)
     parser.add_argument("--destination", type=str)
