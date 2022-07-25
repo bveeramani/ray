@@ -69,6 +69,3 @@ class Chain(Preprocessor):
         for preprocessor in self.preprocessors:
             df = preprocessor.transform_batch(df)
         return df
-
-    def __repr__(self):
-        return f"Chain(preprocessors={self.preprocessors})"

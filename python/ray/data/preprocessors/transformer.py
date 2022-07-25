@@ -67,11 +67,3 @@ class PowerTransformer(Preprocessor):
             column_power_transformer
         )
         return df
-
-    def __repr__(self):
-        return (
-            f"PowerTransformer("
-            f"columns={self.columns}, "
-            f"method={self.method}, "
-            f"power={self.power})"
-        )

@@ -2,6 +2,7 @@ import abc
 import warnings
 from enum import Enum
 from typing import TYPE_CHECKING, Optional
+from ray.air.util.repr_mixin import ReprMixin
 
 from ray.data import Dataset
 from ray.util.annotations import DeveloperAPI, PublicAPI
@@ -21,7 +22,7 @@ class PreprocessorNotFittedException(RuntimeError):
 
 
 @PublicAPI(stability="alpha")
-class Preprocessor(abc.ABC):
+class Preprocessor(abc.ABC, ReprMixin):
     """Implements an ML preprocessing operation.
 
     Preprocessors are stateful objects that can be fitted against a Dataset and used

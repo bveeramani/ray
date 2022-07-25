@@ -53,8 +53,3 @@ class FeatureHasher(Preprocessor):
         # Drop original unhashed columns.
         df.drop(columns=self.columns, inplace=True)
         return df
-
-    def __repr__(self):
-        return (
-            f"FeatureHasher(columns={self.columns}, num_features={self.num_features})"
-        )

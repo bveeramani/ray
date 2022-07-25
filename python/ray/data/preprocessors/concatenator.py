@@ -56,24 +56,24 @@ class Concatenator(Preprocessor):
         raise_if_missing: bool = False,
     ):
         self.output_column_name = output_column_name
-        self.included_columns = include
-        self.excluded_columns = exclude or []
+        self.include = include
+        self.exclude = exclude or []
         self.dtype = dtype
         self.raise_if_missing = raise_if_missing
 
     def _validate(self, df: pd.DataFrame):
         total_columns = set(df)
-        if self.excluded_columns and self.raise_if_missing:
-            missing_columns = set(self.excluded_columns) - total_columns.intersection(
-                set(self.excluded_columns)
+        if self.exclude and self.raise_if_missing:
+            missing_columns = set(self.exclude) - total_columns.intersection(
+                set(self.exclude)
             )
             if missing_columns:
                 raise ValueError(
                     f"Missing columns specified in 'exclude': {missing_columns}"
                 )
-        if self.included_columns and self.raise_if_missing:
-            missing_columns = set(self.included_columns) - total_columns.intersection(
-                set(self.included_columns)
+        if self.include and self.raise_if_missing:
+            missing_columns = set(self.include) - total_columns.intersection(
+                set(self.include)
             )
             if missing_columns:
                 raise ValueError(
@@ -84,10 +84,10 @@ class Concatenator(Preprocessor):
         self._validate(df)
 
         included_columns = set(df)
-        if self.included_columns:  # subset of included columns
-            included_columns = set(self.included_columns)
+        if self.include:  # subset of included columns
+            included_columns = set(self.include)
 
-        columns_to_concat = list(included_columns - set(self.excluded_columns))
+        columns_to_concat = list(included_columns - set(self.exclude))
         concatenated = df[columns_to_concat].to_numpy(dtype=self.dtype)
         df = df.drop(columns=columns_to_concat)
         try:
@@ -96,11 +96,3 @@ class Concatenator(Preprocessor):
             pass
         df[self.output_column_name] = concatenated
         return df
-
-    def __repr__(self):
-        return (
-            f"Concatenator(output_column_name={self.output_column_name}, "
-            f"include={self.included_columns}, "
-            f"exclude={self.excluded_columns}, "
-            f"dtype={self.dtype})"
-        )

@@ -212,12 +212,3 @@ class RobustScaler(Preprocessor):
             column_robust_scaler
         )
         return df
-
-    def __repr__(self):
-        stats = getattr(self, "stats_", None)
-        return (
-            f"RobustScaler("
-            f"columns={self.columns}, "
-            f"quantile_range={self.quantile_range}, "
-            f"stats={stats})>"
-        )

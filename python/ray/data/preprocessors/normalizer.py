@@ -43,6 +43,3 @@ class Normalizer(Preprocessor):
 
         df.loc[:, self.columns] = columns.div(column_norms, axis=0)
         return df
-
-    def __repr__(self):
-        return f"Normalizer(columns={self.columns}, norm={self.norm})>"

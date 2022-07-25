@@ -100,13 +100,6 @@ class OrdinalEncoder(Preprocessor):
         df[self.columns] = df[self.columns].apply(column_ordinal_encoder)
         return df
 
-    def __repr__(self):
-        stats = getattr(self, "stats_", None)
-        return (
-            f"OrdinalEncoder(columns={self.columns}, stats={stats}, "
-            f"encode_lists={self.encode_lists})"
-        )
-
 
 class OneHotEncoder(Preprocessor):
     """Encode columns as new columns using one-hot encoding.
@@ -184,10 +177,6 @@ class OneHotEncoder(Preprocessor):
         # Drop original unencoded columns.
         df = df.drop(columns=list(columns_to_drop))
         return df
-
-    def __repr__(self):
-        stats = getattr(self, "stats_", None)
-        return f"OneHotEncoder(columns={self.columns}, stats={stats})"
 
 
 class MultiHotEncoder(Preprocessor):
@@ -269,10 +258,6 @@ class MultiHotEncoder(Preprocessor):
 
         return df
 
-    def __repr__(self):
-        stats = getattr(self, "stats_", None)
-        return f"MultiHotEncoder(columns={self.columns}, stats={stats})"
-
 
 class LabelEncoder(Preprocessor):
     """Encode values within a label column as ordered integer values.
@@ -304,10 +289,6 @@ class LabelEncoder(Preprocessor):
 
         df[self.label_column] = df[self.label_column].transform(column_label_encoder)
         return df
-
-    def __repr__(self):
-        stats = getattr(self, "stats_", None)
-        return f"LabelEncoder(label_column={self.label_column}, stats={stats})"
 
 
 class Categorizer(Preprocessor):
@@ -359,10 +340,6 @@ class Categorizer(Preprocessor):
     def _transform_pandas(self, df: pd.DataFrame):
         df = df.astype(self.stats_)
         return df
-
-    def __repr__(self):
-        stats = getattr(self, "stats_", None)
-        return f"<Categorizer columns={self.columns} stats={stats}>"
 
 
 def _get_unique_value_indices(

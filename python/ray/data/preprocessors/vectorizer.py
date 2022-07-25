@@ -52,15 +52,6 @@ class HashingVectorizer(Preprocessor):
         df.drop(columns=self.columns, inplace=True)
         return df
 
-    def __repr__(self):
-        fn_name = getattr(self.tokenization_fn, "__name__", self.tokenization_fn)
-        return (
-            f"HashingVectorizer("
-            f"Columns={self.columns}, "
-            f"num_features={self.num_features}, "
-            f"tokenization_fn={fn_name})"
-        )
-
 
 class CountVectorizer(Preprocessor):
     """Tokenize string columns and convert into token columns.
@@ -130,12 +121,3 @@ class CountVectorizer(Preprocessor):
         # Drop original columns.
         df.drop(columns=self.columns, inplace=True)
         return df
-
-    def __repr__(self):
-        fn_name = getattr(self.tokenization_fn, "__name__", self.tokenization_fn)
-        return (
-            f"CountVectorizer("
-            f"columns={self.columns}, "
-            f"tokenization_fn={fn_name}, "
-            f"max_features={self.max_features})"
-        )

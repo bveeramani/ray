@@ -8,6 +8,7 @@ from ray.air._internal.config import ensure_only_allowed_dataclass_keys_updated
 from ray.air.checkpoint import Checkpoint
 from ray.air.config import RunConfig, ScalingConfig
 from ray.air.result import Result
+from ray.air.util.repr_mixin import ReprMixin
 from ray.train.constants import TRAIN_DATASET_KEY
 from ray.util import PublicAPI
 from ray.util.annotations import DeveloperAPI
@@ -35,7 +36,7 @@ class TrainingFailedError(RuntimeError):
 
 
 @DeveloperAPI
-class BaseTrainer(abc.ABC):
+class BaseTrainer(abc.ABC, ReprMixin):
     """Defines interface for distributed training on Ray.
 
     Note: The base ``BaseTrainer`` class cannot be instantiated directly. Only

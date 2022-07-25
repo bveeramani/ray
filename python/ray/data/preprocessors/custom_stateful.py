@@ -105,16 +105,3 @@ class CustomStatefulPreprocessor(Preprocessor):
 
     def _transform_pandas(self, df: "pandas.DataFrame") -> "pandas.DataFrame":
         return self.transform_fn(df, self.stats_)
-
-    def __repr__(self):
-        fit_fn_name = getattr(self.fit_fn, "__name__", str(self.fit_fn))
-        transform_fn_name = getattr(
-            self.transform_fn, "__name__", str(self.transform_fn)
-        )
-        stats = getattr(self, "stats_", None)
-        return (
-            f"CustomStatefulPreprocessor("
-            f"fit_fn={fit_fn_name}, "
-            f"transform_fn={transform_fn_name}, "
-            f"stats={stats})"
-        )

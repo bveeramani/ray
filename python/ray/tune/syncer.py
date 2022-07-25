@@ -30,7 +30,7 @@ from ray.tune.result import NODE_IP
 from ray.tune.utils.file_transfer import sync_dir_between_nodes
 from ray.util.annotations import PublicAPI, DeveloperAPI
 from ray.util.ml_utils.checkpoint_manager import CheckpointStorage, _TrackedCheckpoint
-
+from ray.air.util.repr_mixin import ReprMixin
 if TYPE_CHECKING:
     from ray.tune.experiment import Trial
 
@@ -56,8 +56,8 @@ def _validate_upload_dir(sync_config: "SyncConfig") -> bool:
 
 
 @PublicAPI
-@dataclass
-class SyncConfig:
+@dataclass(repr=False)
+class SyncConfig(ReprMixin):
     """Configuration object for syncing.
 
     If an ``upload_dir`` is specified, both experiment and trial checkpoints

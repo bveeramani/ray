@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Callable, Dict, List, Mapping, Optional, Union, Tuple
 
 from ray.air.constants import WILDCARD_KEY
+from ray.air.util.repr_mixin import ReprMixin
 from ray.util.annotations import PublicAPI
 
 
@@ -27,9 +28,9 @@ MAX = "max"
 MIN = "min"
 
 
-@dataclass
+@dataclass(repr=False)
 @PublicAPI(stability="alpha")
-class ScalingConfig:
+class ScalingConfig(ReprMixin):
     """Configuration for scaling training.
 
     This is the schema for the scaling_config dict, and after beta, this will be the
@@ -202,9 +203,9 @@ class ScalingConfig:
         )
 
 
-@dataclass
+@dataclass(repr=False)
 @PublicAPI(stability="alpha")
-class DatasetConfig:
+class DatasetConfig(ReprMixin):
     """Configuration for ingest of a single Dataset.
 
     These configs define how the Dataset should be read into the DataParallelTrainer.
@@ -363,9 +364,9 @@ class DatasetConfig:
         return new_config
 
 
-@dataclass
+@dataclass(repr=False)
 @PublicAPI(stability="alpha")
-class FailureConfig:
+class FailureConfig(ReprMixin):
     """Configuration related to failure handling of each run/trial.
 
     Args:
@@ -395,9 +396,9 @@ class FailureConfig:
             )
 
 
-@dataclass
+@dataclass(repr=False)
 @PublicAPI(stability="alpha")
-class CheckpointConfig:
+class CheckpointConfig(ReprMixin):
     """Configurable parameters for defining the checkpointing strategy.
 
     Default behavior is to persist all checkpoints to disk. If
@@ -472,9 +473,9 @@ class CheckpointConfig:
         return f"{prefix}{self.checkpoint_score_attribute}"
 
 
-@dataclass
+@dataclass(repr=False)
 @PublicAPI(stability="alpha")
-class RunConfig:
+class RunConfig(ReprMixin):
     """Runtime configuration for individual trials that are run.
 
     This contains information that applies to individual runs of Trainable classes.

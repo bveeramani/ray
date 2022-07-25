@@ -34,7 +34,3 @@ class Tokenizer(Preprocessor):
 
         df.loc[:, self.columns] = df.loc[:, self.columns].transform(column_tokenizer)
         return df
-
-    def __repr__(self):
-        name = getattr(self.tokenization_fn, "__name__", self.tokenization_fn)
-        return f"Tokenizer(columns={self.columns}, tokenization_fn={name})"
