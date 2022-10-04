@@ -152,13 +152,6 @@ def get_args_parser(add_help=True):
     # Mixed precision training parameters
     parser.add_argument("--amp", action="store_true", help="Use torch.cuda.amp for mixed precision training")
 
-    # Use CopyPaste augmentation training parameter
-    parser.add_argument(
-        "--use-copypaste",
-        action="store_true",
-        help="Use CopyPaste data augmentation. Works only with data-augmentation='lsj'.",
-    )
-
     return parser
 
 
@@ -195,11 +188,6 @@ def main(args):
         train_batch_sampler = torch.utils.data.BatchSampler(train_sampler, args.batch_size, drop_last=True)
 
     train_collate_fn = utils.collate_fn
-    if args.use_copypaste:
-        if args.data_augmentation != "lsj":
-            raise RuntimeError("SimpleCopyPaste algorithm currently only supports the 'lsj' data augmentation policies")
-
-        train_collate_fn = copypaste_collate_fn
 
     data_loader = torch.utils.data.DataLoader(
         dataset, batch_sampler=train_batch_sampler, num_workers=args.workers, collate_fn=train_collate_fn
