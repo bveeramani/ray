@@ -81,6 +81,7 @@ class BackendExecutor:
         if self._max_failures < 0:
             self._max_failures = float("inf")
         self._num_failures = 0
+        self._last_failure = None
         self._initialization_hook = None
         self._placement_group = None
 
@@ -229,7 +230,7 @@ class BackendExecutor:
 
         futures = []
         for node_id, gpu_ids in node_id_to_gpu_ids.items():
-            all_gpu_ids = ",".join([str(gpu_id) for gpu_id in gpu_ids])
+            all_gpu_ids = ",".join(gpu_ids)
 
             def set_gpu_ids():
                 os.environ["CUDA_VISIBLE_DEVICES"] = all_gpu_ids
@@ -345,7 +346,7 @@ class BackendExecutor:
                     train_func=train_func,
                     dataset_shard=self.dataset_shards[index],
                     checkpoint=checkpoint,
-                    encode_data_fn=self._backend.encode_data,
+                    encode_data_fn=self._backend._encode_data,
                 )
             )
 
@@ -395,10 +396,8 @@ class BackendExecutor:
                 raise RuntimeError(
                     "Some workers returned results while "
                     "others didn't. Make sure that "
-                    "`session.report()` (legacy API:"
-                    "`train.report()` and `train.save_checkpoint()`) "
-                    "are called the same number of times on all "
-                    "workers."
+                    "`session.report()` are called the "
+                    "same number of times on all workers."
                 )
             else:
                 # Return None if all results are None.
@@ -409,15 +408,13 @@ class BackendExecutor:
             raise RuntimeError(
                 "Some workers returned results with "
                 "different types. Make sure that "
-                "`session.report()` (legacy API:"
-                "`train.report()` and `train.save_checkpoint()`) "
-                "are called the same number of times on all "
-                "workers."
+                "`session.report()` are called the "
+                "same number of times on all workers."
             )
         return results
 
     def pause_reporting(self):
-        """Disable workers from enqueuing results from `train.report()`.
+        """Disable workers from enqueuing results from ``session.report()``.
 
         Note: Already reported results may still be enqueued at this point,
               and should be handled appropriately.
@@ -474,10 +471,11 @@ class BackendExecutor:
         Returns:
             The resolved objects represented by the passed in ObjectRefs.
         """
-        success = check_for_failure(remote_values)
+        success, exception = check_for_failure(remote_values)
         if success:
             return ray.get(remote_values)
         else:
+            self._last_failure = exception
             self._increment_failures()
             logger.warning(
                 "Failure identified during training. Restarting all workers and "
@@ -486,16 +484,27 @@ class BackendExecutor:
             self._restart()
             raise TrainingWorkerError
 
-    def shutdown(self):
-        """Shuts down the workers in the worker group."""
-        try:
-            self._backend.on_shutdown(self.worker_group, self._backend_config)
-        except RayActorError:
-            logger.warning(
-                "Graceful shutdown of backend failed. This is "
-                "expected if one of the workers has crashed."
-            )
-        self.worker_group.shutdown()
+    def shutdown(self, graceful_termination: bool = True):
+        """Shuts down the workers in the worker group.
+
+        Args:
+            graceful_termination: If set to True, attempt to clean up the backend
+                before terminating the Ray actors.
+
+        """
+        if graceful_termination:
+            try:
+                self._backend.on_shutdown(self.worker_group, self._backend_config)
+            except RayActorError:
+                logger.warning(
+                    "Graceful shutdown of backend failed. This is "
+                    "expected if one of the workers has crashed."
+                )
+
+        if graceful_termination:
+            self.worker_group.shutdown()
+        else:
+            self.worker_group.shutdown(patience_s=0)
         self.worker_group = InactiveWorkerGroup()
 
         if self._placement_group:
@@ -521,13 +530,14 @@ class BackendExecutor:
     def _increment_failures(self):
         self._num_failures += 1
         if self._num_failures >= self._max_failures:
-            raise RuntimeError(
-                "Training has failed even after "
+            exc = RuntimeError(
+                "Training has failed after "
                 f"{self._num_failures} "
                 "attempts. You can change the number of max "
                 "failure attempts by setting the "
                 "`max_retries` arg in your `Trainer`."
-            ) from None
+            )
+            raise exc.with_traceback(None) from self._last_failure
 
     def get_worker_group(self):
         return self.worker_group

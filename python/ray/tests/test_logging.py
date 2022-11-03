@@ -1,10 +1,13 @@
+import io
 import os
 import re
 import subprocess
 import sys
 import tempfile
 import time
+import logging
 from collections import Counter, defaultdict
+from contextlib import redirect_stderr
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -15,6 +18,7 @@ from ray._private import ray_constants
 from ray._private.log_monitor import (
     LOG_NAME_UPDATE_INTERVAL_S,
     RAY_LOG_MONITOR_MANY_FILES_THRESHOLD,
+    LogFileInfo,
     LogMonitor,
 )
 from ray._private.test_utils import (
@@ -30,6 +34,49 @@ from ray.cross_language import java_actor_class
 def set_logging_config(monkeypatch, max_bytes, backup_count):
     monkeypatch.setenv("RAY_ROTATION_MAX_BYTES", str(max_bytes))
     monkeypatch.setenv("RAY_ROTATION_BACKUP_COUNT", str(backup_count))
+
+
+def test_reopen_changed_inode(tmp_path):
+    """Make sure that when we reopen a file because the inode has changed, we
+    open to the right location."""
+
+    path1 = tmp_path / "file"
+    path2 = tmp_path / "changed_file"
+
+    with open(path1, "w") as f:
+        for i in range(1000):
+            print(f"{i}", file=f)
+
+    with open(path2, "w") as f:
+        for i in range(2000):
+            print(f"{i}", file=f)
+
+    file_info = LogFileInfo(
+        filename=path1,
+        size_when_last_opened=0,
+        file_position=0,
+        file_handle=None,
+        is_err_file=False,
+        job_id=None,
+        worker_pid=None,
+    )
+
+    file_info.reopen_if_necessary()
+    for _ in range(1000):
+        file_info.file_handle.readline()
+
+    orig_file_pos = file_info.file_handle.tell()
+    file_info.file_position = orig_file_pos
+
+    # NOTE: On windows, an open file can't be deleted.
+    file_info.file_handle.close()
+    os.remove(path1)
+    os.rename(path2, path1)
+
+    file_info.reopen_if_necessary()
+
+    assert file_info.file_position == orig_file_pos
+    assert file_info.file_handle.tell() == orig_file_pos
 
 
 def test_log_rotation_config(ray_start_cluster, monkeypatch):
@@ -662,6 +709,45 @@ def test_log_monitor_update_backpressure(tmp_path, mock_timer):
     assert not log_monitor.should_update_filenames(current)
     mock_timer.return_value = LOG_NAME_UPDATE_INTERVAL_S + 0.1
     assert log_monitor.should_update_filenames(current)
+
+
+def test_repr_inheritance():
+    """Tests that a subclass's repr is used in logging."""
+    logger = logging.getLogger(__name__)
+
+    class MyClass:
+        def __repr__(self) -> str:
+            return "ThisIsMyCustomActorName"
+
+        def do(self):
+            logger.warning("text")
+
+    class MySubclass(MyClass):
+        pass
+
+    my_class_remote = ray.remote(MyClass)
+    my_subclass_remote = ray.remote(MySubclass)
+
+    f = io.StringIO()
+    with redirect_stderr(f):
+        my_class_actor = my_class_remote.remote()
+        ray.get(my_class_actor.do.remote())
+        # Wait a little to be sure that we have captured the output
+        time.sleep(1)
+        print("", flush=True)
+        print("", flush=True, file=sys.stderr)
+        f = f.getvalue()
+        assert "ThisIsMyCustomActorName" in f and "MySubclass" not in f
+
+    f2 = io.StringIO()
+    with redirect_stderr(f2):
+        my_subclass_actor = my_subclass_remote.remote()
+        ray.get(my_subclass_actor.do.remote())
+        # Wait a little to be sure that we have captured the output
+        time.sleep(1)
+        print("", flush=True, file=sys.stderr)
+        f2 = f2.getvalue()
+        assert "ThisIsMyCustomActorName" in f2 and "MySubclass" not in f2
 
 
 if __name__ == "__main__":

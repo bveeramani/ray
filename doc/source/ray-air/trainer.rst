@@ -1,7 +1,7 @@
 .. _air-trainers:
 
-Using Trainers for Distributed Training
-=======================================
+Using Trainers
+==============
 
 .. https://docs.google.com/drawings/d/1anmT0JVFH9abR5wX5_WcxNHJh6jWeDL49zWxGpkfORA/edit
 
@@ -212,8 +212,11 @@ You can interact with a `Result` object as follows:
     # returns the final metrics as reported
     result.metrics
 
-    # returns the contain an Exception if training failed.
+    # returns the Exception if training failed.
     result.error
+
+    # Returns a pandas dataframe of all reported results
+    result.metrics_dataframe
 
 
 See :class:`the Result docstring <ray.air.result.Result>` for more details.

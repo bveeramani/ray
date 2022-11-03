@@ -11,7 +11,7 @@ import urllib
 import urllib.parse
 import warnings
 from datetime import datetime
-from distutils.dir_util import copy_tree
+from shutil import copytree
 from typing import Optional, Set
 
 import click
@@ -730,7 +730,12 @@ def start(
         if address is None:
             default_address = f"{ray_params.node_ip_address}:{port}"
             bootstrap_address = services.find_bootstrap_address(temp_dir)
-            if default_address == bootstrap_address:
+            if (
+                default_address == bootstrap_address
+                and bootstrap_address in services.find_gcs_addresses()
+            ):
+                # The default address is already in use by a local running GCS
+                # instance.
                 raise ConnectionError(
                     f"Ray is trying to start at {default_address}, "
                     f"but is already running at {bootstrap_address}. "
@@ -1858,8 +1863,16 @@ def memory(
     default=ray_constants.REDIS_DEFAULT_PASSWORD,
     help="Connect to ray with redis_password.",
 )
+@click.option(
+    "-v",
+    "--verbose",
+    required=False,
+    is_flag=True,
+    hidden=True,
+    help="Experimental: Display additional debuggging information.",
+)
 @PublicAPI
-def status(address, redis_password):
+def status(address: str, redis_password: str, verbose: bool):
     """Print cluster status, including autoscaling info."""
     address = services.canonicalize_bootstrap_address_or_die(address)
     if not ray._private.gcs_utils.check_health(address):
@@ -1873,7 +1886,7 @@ def status(address, redis_password):
     error = ray.experimental.internal_kv._internal_kv_get(
         ray_constants.DEBUG_AUTOSCALING_ERROR
     )
-    print(debug_status(status, error))
+    print(debug_status(status, error, verbose=verbose))
 
 
 @cli.command(hidden=True)
@@ -1955,7 +1968,7 @@ def local_dump(
     )
 
 
-@cli.command()
+@cli.command(name="logs")
 @click.argument(
     "glob_filter",
     required=False,
@@ -2041,6 +2054,7 @@ def local_dump(
         "automatically from querying the GCS server."
     ),
 )
+@PublicAPI(stability="alpha")
 def ray_logs(
     glob_filter,
     node_ip: str,
@@ -2498,17 +2512,17 @@ def cpp(show_library_path, generate_bazel_project_template_to):
                 "The provided directory "
                 f"{generate_bazel_project_template_to} doesn't exist."
             )
-        copy_tree(cpp_templete_dir, generate_bazel_project_template_to)
+        copytree(cpp_templete_dir, generate_bazel_project_template_to)
         out_include_dir = os.path.join(
             generate_bazel_project_template_to, "thirdparty/include"
         )
         if not os.path.exists(out_include_dir):
             os.makedirs(out_include_dir)
-        copy_tree(include_dir, out_include_dir)
+        copytree(include_dir, out_include_dir)
         out_lib_dir = os.path.join(generate_bazel_project_template_to, "thirdparty/lib")
         if not os.path.exists(out_lib_dir):
             os.makedirs(out_lib_dir)
-        copy_tree(lib_dir, out_lib_dir)
+        copytree(lib_dir, out_lib_dir)
 
         cli_logger.print(
             "Project template generated to {}",
@@ -2558,7 +2572,6 @@ cli.add_command(install_nightly)
 cli.add_command(cpp)
 cli.add_command(disable_usage_stats)
 cli.add_command(enable_usage_stats)
-add_command_alias(ray_logs, name="logs", hidden=False)
 cli.add_command(ray_list, name="list")
 cli.add_command(ray_get, name="get")
 add_command_alias(summary_state_cli_group, name="summary", hidden=False)
