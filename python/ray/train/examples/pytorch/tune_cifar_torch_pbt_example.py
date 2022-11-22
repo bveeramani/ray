@@ -83,7 +83,7 @@ def train_func(config):
         checkpoint_dict = train.get_checkpoint().to_dict()
 
         # Load in model
-        model_state = checkpoint_dict["model"]
+        model_state = checkpoint_dict["model_state_dict"]
         model.load_state_dict(model_state)
         model = train.torch.prepare_model(model)
 
@@ -147,7 +147,7 @@ def train_func(config):
         checkpoint = Checkpoint.from_dict(
             {
                 "epoch": epoch,
-                "model": model.state_dict(),
+                "model_state_dict": model.state_dict(),
                 "optimizer_state_dict": optimizer.state_dict(),
             }
         )
