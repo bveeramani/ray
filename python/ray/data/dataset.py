@@ -21,6 +21,8 @@ from typing import (
 from uuid import uuid4
 import warnings
 
+import termcolor
+
 import numpy as np
 
 import ray
