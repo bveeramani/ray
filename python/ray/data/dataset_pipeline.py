@@ -1114,7 +1114,7 @@ class DatasetPipeline(Generic[T]):
         local_shuffle_buffer_size: Optional[int] = None,
         local_shuffle_seed: Optional[int] = None,
     ) -> "tf.data.Dataset":
-        """Call :py:meth:`Dataset.to_tf <ray.data.Dataset.to_tf>` over the stream of
+        """Call :meth:`Dataset.to_tf <ray.data.Dataset.to_tf>` over the stream of
         output batches from the pipeline"""
         return Dataset.to_tf(
             self,
