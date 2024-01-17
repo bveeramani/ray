@@ -706,22 +706,12 @@ def _execution_allowed(
     if new_usage.satisfies_limit(global_limits):
         return True
 
-    # We're over global limits, but execution may still be allowed if memory is the
-    # only bottleneck and this wouldn't impact downstream memory limits. This avoids
-    # stalling the execution for memory bottlenecks that occur upstream.
-    # See for more context: https://github.com/ray-project/ray/pull/32673
+    # If completing a task decreases the overall object store memory usage, allow it
+    # even if we're over the global limit.
     global_limits_sans_memory = ExecutionResources(
         cpu=global_limits.cpu, gpu=global_limits.gpu
     )
     global_ok_sans_memory = new_usage.satisfies_limit(global_limits_sans_memory)
-    downstream_usage = global_usage.downstream_memory_usage[op]
-    downstream_limit = global_limits.scale(downstream_usage.topology_fraction)
-    downstream_memory_ok = ExecutionResources(
-        object_store_memory=downstream_usage.object_store_memory
-    ).satisfies_limit(downstream_limit)
-
-    # If completing a task decreases the overall object store memory usage, allow it
-    # even if we're over the global limit.
     if (
         DataContext.get_current().use_runtime_metrics_scheduling
         and global_ok_sans_memory
@@ -730,4 +720,4 @@ def _execution_allowed(
     ):
         return True
 
-    return global_ok_sans_memory and downstream_memory_ok
+    return False
