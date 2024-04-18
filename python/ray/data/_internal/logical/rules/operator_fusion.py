@@ -24,6 +24,7 @@ from ray.data._internal.logical.operators.all_to_all_operator import (
     Repartition,
 )
 from ray.data._internal.logical.operators.map_operator import AbstractUDFMap
+from ray.data._internal.logical.operators.read_files_operator import ReadFiles
 from ray.data._internal.stats import StatsDict
 from ray.data.context import DataContext
 
@@ -151,6 +152,8 @@ class OperatorFusionRule(Rule):
             return False
 
         down_logical_op = self._op_map[down_op]
+        if isinstance(down_logical_op, ReadFiles):
+            return False
         up_logical_op = self._op_map[up_op]
 
         if up_op.get_additional_split_factor() > 1:

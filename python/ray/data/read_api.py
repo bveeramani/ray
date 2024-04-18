@@ -923,6 +923,30 @@ def read_images(
     )
 
 
+def read_images_fast(paths: Union[str, List[str]], override_num_blocks: int) -> Dataset:
+    from ray.data._internal.logical.operators.read_files_operator import ReadFiles
+    from ray.data._internal.planner.plan_read_files_op import create_input_data_buffer
+
+    read_op = ReadFiles(paths)
+    logical_plan = LogicalPlan(read_op)
+    metadata = [
+        x.blocks[0][1] for x in create_input_data_buffer(read_op._paths)._input_data
+    ]
+    block_list = BlockList(
+        [x.blocks[0][0] for x in create_input_data_buffer(read_op._paths)._input_data],
+        metadata,
+        owned_by_consumer=False,
+    )
+    return Dataset(
+        plan=ExecutionPlan(
+            block_list,
+            DatasetStats(metadata={"FromItems": metadata}, parent=None),
+            run_by_consumer=False,
+        ),
+        logical_plan=logical_plan,
+    )
+
+
 @PublicAPI
 def read_parquet_bulk(
     paths: Union[str, List[str]],

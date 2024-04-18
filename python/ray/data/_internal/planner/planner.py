@@ -14,12 +14,14 @@ from ray.data._internal.logical.operators.input_data_operator import InputData
 from ray.data._internal.logical.operators.map_operator import AbstractUDFMap
 from ray.data._internal.logical.operators.n_ary_operator import Union, Zip
 from ray.data._internal.logical.operators.one_to_one_operator import Limit
+from ray.data._internal.logical.operators.read_files_operator import ReadFiles
 from ray.data._internal.logical.operators.read_operator import Read
 from ray.data._internal.logical.operators.write_operator import Write
 from ray.data._internal.planner.plan_all_to_all_op import plan_all_to_all_op
 from ray.data._internal.planner.plan_from_op import plan_from_op
 from ray.data._internal.planner.plan_input_data_op import plan_input_data_op
 from ray.data._internal.planner.plan_limit_op import plan_limit_op
+from ray.data._internal.planner.plan_read_files_op import plan_read_files_op
 from ray.data._internal.planner.plan_read_op import plan_read_op
 from ray.data._internal.planner.plan_udf_map_op import plan_udf_map_op
 from ray.data._internal.planner.plan_write_op import plan_write_op
@@ -49,6 +51,9 @@ class Planner:
         if isinstance(logical_op, Read):
             assert not physical_children
             physical_op = plan_read_op(logical_op)
+        elif isinstance(logical_op, ReadFiles):
+            assert not physical_children
+            physical_op = plan_read_files_op(logical_op)
         elif isinstance(logical_op, InputData):
             assert not physical_children
             physical_op = plan_input_data_op(logical_op)
