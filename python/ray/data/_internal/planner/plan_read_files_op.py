@@ -25,6 +25,8 @@ from ray.data.datasource.file_reader import FileReader
 if TYPE_CHECKING:
     import pyarrow
 
+    from ray.data.datasource.in_memory_size_estimator import InMemorySizeEstimator
+
 logger = logging.getLogger(__name__)
 
 
