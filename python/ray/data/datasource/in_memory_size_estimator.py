@@ -1,8 +1,11 @@
-from typing import List
+from typing import TYPE_CHECKING, List
 
 from ray.data._internal.delegating_block_builder import DelegatingBlockBuilder
 from ray.data.block import BlockAccessor
 from ray.data.datasource.file_reader import FileReader
+
+if TYPE_CHECKING:
+    import pyarrow
 
 
 class InMemorySizeEstimator:

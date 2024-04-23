@@ -1,5 +1,5 @@
 import logging
-from typing import Iterable, List, Tuple
+from typing import TYPE_CHECKING, Iterable, List, Tuple
 
 import numpy as np
 import pyarrow as pa
@@ -21,6 +21,9 @@ from ray.data._internal.logical.operators.read_files_operator import ReadFiles
 from ray.data.block import Block, BlockAccessor
 from ray.data.datasource.file_meta_provider import _handle_read_os_error
 from ray.data.datasource.file_reader import FileReader
+
+if TYPE_CHECKING:
+    import pyarrow
 
 logger = logging.getLogger(__name__)
 
