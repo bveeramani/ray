@@ -926,9 +926,20 @@ def read_images(
 def read_images_fast(paths: Union[str, List[str]], override_num_blocks: int) -> Dataset:
     from ray.data._internal.logical.operators.read_files_operator import ReadFiles
     from ray.data._internal.planner.plan_read_files_op import create_input_data_buffer
+    from ray.data.datasource.image_reader import ImageReader
+    from ray.data.datasource.in_memory_size_estimator import (
+        SamplingInMemorySizeEstimator,
+    )
+    from ray.data.datasource.path_util import _resolve_paths_and_filesystem
 
-    read_op = ReadFiles(paths)
+    paths, filesystem = _resolve_paths_and_filesystem(paths, None)
+
+    reader = ImageReader()
+    estimator = SamplingInMemorySizeEstimator(paths, filesystem, reader)
+    read_op = ReadFiles(paths, reader, estimator, filesystem)
     logical_plan = LogicalPlan(read_op)
+
+    # Legacy stuff
     metadata = [
         x.blocks[0][1] for x in create_input_data_buffer(read_op._paths)._input_data
     ]
@@ -937,6 +948,7 @@ def read_images_fast(paths: Union[str, List[str]], override_num_blocks: int) -> 
         metadata,
         owned_by_consumer=False,
     )
+
     return Dataset(
         plan=ExecutionPlan(
             block_list,
